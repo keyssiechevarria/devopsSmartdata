@@ -1,0 +1,49 @@
+{
+	"name": "ds_azuresql_smartdata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_azuresql_smartdata",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"Server": {
+					"value": "@dataset().Server",
+					"type": "Expression"
+				},
+				"Database": {
+					"value": "@dataset().Database",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"Server": {
+				"type": "string",
+				"defaultValue": "sqlsvr-dev-east-smartdata-001.database.windows.net"
+			},
+			"Database": {
+				"type": "string",
+				"defaultValue": "db-smartdata-dev"
+			},
+			"Schema": {
+				"type": "string"
+			},
+			"Table": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().Schema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().Table",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

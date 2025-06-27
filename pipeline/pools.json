@@ -1,0 +1,246 @@
+{
+	"name": "pools",
+	"properties": {
+		"activities": [
+			{
+				"name": "Inicio",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_loadHistory]",
+					"storedProcedureParameters": {
+						"Esquema": {
+							"value": "bronze",
+							"type": "String"
+						},
+						"Fuente": {
+							"value": "TREBBLE",
+							"type": "String"
+						},
+						"Tabla": {
+							"value": "TR_pools",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_azuresql_smartdata",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"Server": "sqlsvr-dev-east-smartdata-001.database.windows.net",
+						"Database": "db-smartdata-dev"
+					}
+				}
+			},
+			{
+				"name": "pools",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Inicio",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "RestSource",
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET",
+						"paginationRules": {
+							"supportRFC5988": "true"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"tableOption": "autoCreate",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['id']"
+								},
+								"sink": {
+									"name": "id",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['name']"
+								},
+								"sink": {
+									"name": "name",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_rest_trebble",
+						"type": "DatasetReference",
+						"parameters": {
+							"URL": "https://main.treble.ai/poll/api/all"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_azuresql_smartdata",
+						"type": "DatasetReference",
+						"parameters": {
+							"Server": "sqlsvr-dev-east-smartdata-001.database.windows.net",
+							"Database": "db-smartdata-dev",
+							"Schema": "bronze",
+							"Table": "TR_pools"
+						}
+					}
+				]
+			},
+			{
+				"name": "Fin correcto",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "pools",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_loadHistory_update]",
+					"storedProcedureParameters": {
+						"Detalle_Estado": {
+							"value": {
+								"value": "@activity('pools').output.executionDetails[0].status",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Esquema": {
+							"value": "bronze",
+							"type": "String"
+						},
+						"Estado": {
+							"value": "FULL REFRESH",
+							"type": "String"
+						},
+						"Fuente": {
+							"value": "TREBBLE",
+							"type": "String"
+						},
+						"Tabla": {
+							"value": "TR_pools",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_azuresql_smartdata",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"Server": "sqlsvr-dev-east-smartdata-001.database.windows.net",
+						"Database": "db-smartdata-dev"
+					}
+				}
+			},
+			{
+				"name": "Fin Fallido",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "pools",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[sp_loadHistory_update]",
+					"storedProcedureParameters": {
+						"Detalle_Estado": {
+							"value": {
+								"value": "@activity('pools').output.executionDetails[0].status\n\n",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"Esquema": {
+							"value": "bronze",
+							"type": "String"
+						},
+						"Estado": {
+							"value": "FALLIDO",
+							"type": "String"
+						},
+						"Fuente": {
+							"value": "TREBBLE",
+							"type": "String"
+						},
+						"Tabla": {
+							"value": "TR_pools",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_azuresql_smartdata",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"Server": "sqlsvr-dev-east-smartdata-001.database.windows.net",
+						"Database": "db-smartdata-dev"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "__TREBBLE"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-06-25T18:06:30Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

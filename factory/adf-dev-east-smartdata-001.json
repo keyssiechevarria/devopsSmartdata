@@ -1,0 +1,9 @@
+{
+	"name": "adf-dev-east-smartdata-001",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "84fc19e4-c0c6-46dc-9e34-557ca5c3efcf",
+		"tenantId": "966233e3-0b75-4c77-877a-d9b70a69ea01"
+	}
+}
